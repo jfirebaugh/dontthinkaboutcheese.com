@@ -5,6 +5,12 @@
   <script id="twitter-wjs" src="https://platform.twitter.com/widgets.js"></script>
   <link href='//fonts.googleapis.com/css?family=Gochi+Hand|Open+Sans' rel='stylesheet' type='text/css'>
   <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
     body {
       text-align: center;
       font-family: 'Open Sans', sans-serif;
@@ -110,7 +116,7 @@
       opacity: 0;
     }
 
-    #game .timer {
+    #timer {
       display: inline-block;
       padding: 5px 10px;
       border-radius: 5px;
@@ -127,6 +133,12 @@
       margin-left: 10px;
       padding: 10px 20px 5px 20px;
     }
+
+    #cc {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+    }
   </style>
 </head>
 <body>
@@ -142,13 +154,13 @@
 </div>
 
 <div id="outro">
-  <p><span class="timer"></span> seconds. Not bad!</p>
+  <p><span id="score"></span> seconds. Not bad!</p>
   <button class="start">Play Again!</button>
-  <p id="cc"></p>
+  <span id="cc"></span>
 </div>
 
 <div id="game">
-  <span class="timer">0.000</span>
+  <span id="timer">0.000</span>
   <button id="stop">Darn it! I thought about cheese.</button>
 </div>
 
@@ -177,8 +189,7 @@
   ]).slice(0, 10);
 
   var start,
-      done = false,
-      format = d3.format('03d'),
+      done,
       seconds,
       current;
 
@@ -190,25 +201,37 @@
       return 'url(images/' + d.split('/')[0] + '.jpg)'
     });
 
+  d3.selection.prototype.fadeIn = function(duration) {
+    this
+      .style('opacity', 0)
+      .style('display', 'block')
+      .transition()
+      .duration(duration || 500)
+      .style('opacity', 1);
+  };
+
+  d3.selection.prototype.fadeOut = function(duration) {
+    this.transition()
+      .duration(duration || 500)
+      .style('opacity', 0)
+      .each('end', function () {
+        d3.select(this)
+          .style('display', 'none');
+      });
+  };
+
   d3.selectAll('.start')
     .on('click', function () {
+      done = false;
       cheeses = d3.shuffle(cheeses);
       current = -1;
       start = new Date();
 
-      d3.select('#intro, #outro').transition()
-        .duration(500)
-        .style('opacity', 0)
-        .each('end', function () {
-          d3.select(this)
-            .style('display', 'none');
-        });
+      d3.selectAll('#intro, #outro')
+        .fadeOut();
 
       d3.select('#game')
-        .style('display', 'block')
-        .transition()
-        .duration(500)
-        .style('opacity', 1);
+        .fadeIn();
 
       function next() {
         if (done) return;
@@ -219,10 +242,13 @@
 
       setTimeout(next, 3000);
 
+      var format = d3.format('03d'),
+        timer = d3.select('#timer');
+
       d3.timer(function () {
         var ms = new Date() - start;
         seconds = Math.floor(ms / 1000) + '.' + format(ms % 1000);
-        d3.selectAll('.timer').text(seconds);
+        timer.text(seconds);
         return done;
       });
     });
@@ -233,15 +259,13 @@
       images.classed('current', false);
 
       d3.select('#game')
-        .transition()
-        .duration(500)
-        .style('opacity', 0);
+        .fadeOut();
 
       d3.select('#outro')
-        .style('display', 'block')
-        .transition()
-        .duration(500)
-        .style('opacity', 1);
+        .fadeIn();
+
+      d3.select('#score')
+        .text(seconds);
 
       d3.selectAll('.twitter-share-button, .twitter-follow-button')
         .remove();
