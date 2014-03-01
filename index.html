@@ -144,6 +144,7 @@
 <div id="outro">
   <p><span class="timer"></span> seconds. Not bad!</p>
   <button class="start">Play Again!</button>
+  <p id="cc"></p>
 </div>
 
 <div id="game">
@@ -178,8 +179,8 @@
   var start,
       done = false,
       format = d3.format('03d'),
-      time = d3.selectAll('.timer'),
-      seconds;
+      seconds,
+      current;
 
   var images = d3.select('#background')
     .selectAll('div')
@@ -191,6 +192,8 @@
 
   d3.selectAll('.start')
     .on('click', function () {
+      cheeses = d3.shuffle(cheeses);
+      current = -1;
       start = new Date();
 
       d3.select('#intro, #outro').transition()
@@ -207,12 +210,10 @@
         .duration(500)
         .style('opacity', 1);
 
-      var current = 0;
-
       function next() {
         if (done) return;
-        images.classed('current', function (d, i) { return i === current; });
-        current = (current + 1) % cheeses.length;
+        current++;
+        images.classed('current', function (d, i) { return i === (current % cheeses.length); });
         setTimeout(next, 5000);
       }
 
@@ -221,7 +222,7 @@
       d3.timer(function () {
         var ms = new Date() - start;
         seconds = Math.floor(ms / 1000) + '.' + format(ms % 1000);
-        time.text(seconds);
+        d3.selectAll('.timer').text(seconds);
         return done;
       });
     });
@@ -260,6 +261,20 @@
         .attr('data-hashtags', 'dontthinkaboutcheese')
         .attr('data-text', 'I went ' + seconds +
           ' seconds without thinking about cheese! How long can you go?');
+
+      if (current >= 0) {
+        var credits = cheeses.slice(0, current + 1)
+          .map(function (d) {
+            return '<a href="http://www.flickr.com/photos/' + d + '/">' + d.split('/')[0] + '</a>'
+          })
+          .join(', ');
+
+        d3.select('#cc')
+          .html('Photos CC-BY / CC-BY-NA ' + credits + '.');
+      } else {
+        d3.select('#cc')
+          .html('');
+      }
 
       twttr.widgets.load();
     });
