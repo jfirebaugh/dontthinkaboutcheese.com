@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <script src="d3.v3.js"></script>
+  <script id="twitter-wjs" src="https://platform.twitter.com/widgets.js"></script>
+  <link href='//fonts.googleapis.com/css?family=Gochi+Hand|Open+Sans' rel='stylesheet' type='text/css'>
+  <style>
+    body {
+      text-align: center;
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    #background div {
+      z-index: -1;
+      position: absolute;
+      top: -20px;
+      bottom: -20px;
+      left: -20px;
+      right: -20px;
+      background-size: cover;
+      background-repeat: no-repeat;
+      opacity: 0;
+      -webkit-transition-property: opacity, -webkit-transform;
+      -webkit-transition-duration: 3s, 10s;
+         -moz-transition-property: opacity, -moz-transform;
+         -moz-transition-duration: 3s, 10s;
+          -ms-transition-property: opacity, -ms-transform;
+          -ms-transition-duration: 3s, 10s;
+           -o-transition-property: opacity, -o-transform;
+           -o-transition-duration: 3s, 10s;
+              transition-property: opacity, transform;
+              transition-duration: 3s, 10s;
+    }
+
+    #background :nth-child(4n) {
+      -webkit-transform-origin: bottom left;
+         -moz-transform-origin: bottom left;
+          -ms-transform-origin: bottom left;
+           -o-transform-origin: bottom left;
+              transform-origin: bottom left;
+    }
+    #background :nth-child(4n+1) {
+      -webkit-transform-origin: top right;
+         -moz-transform-origin: top right;
+          -ms-transform-origin: top right;
+           -o-transform-origin: top right;
+              transform-origin: top right;
+    }
+    #background :nth-child(4n+2) {
+      -webkit-transform-origin: top left;
+         -moz-transform-origin: top left;
+          -ms-transform-origin: top left;
+           -o-transform-origin: top left;
+              transform-origin: top left;
+    }
+    #background :nth-child(4n+3) {
+      -webkit-transform-origin: bottom right;
+         -moz-transform-origin: bottom right;
+          -ms-transform-origin: bottom right;
+           -o-transform-origin: bottom right;
+              transform-origin: bottom right;
+    }
+
+    #background .current {
+      opacity: 1;
+      -webkit-transform: scale(1.1) translate(20px);
+         -moz-transform: scale(1.1) translate(20px);
+          -ms-transform: scale(1.1) translate(20px);
+           -o-transform: scale(1.1) translate(20px);
+              transform: scale(1.1) translate(20px);
+    }
+
+    h1 {
+      font-size: 60px;
+      font-family: 'Gochi Hand', cursive;
+      text-shadow: 0px 0px 30px rgba(255, 255, 255, 1);
+    }
+
+    p {
+      margin-top: 5em;
+    }
+
+    .start {
+      width: 300px;
+      height: 100px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      margin-top: -50px;
+      margin-left: -150px;
+      border: 0;
+      border-radius: 20px;
+      background-color: #eeb64d;
+      font-size: 50px;
+      font-family: 'Gochi Hand', cursive;
+      cursor: pointer;
+      padding-top: 10px;
+    }
+
+    #game {
+      display: none;
+      opacity: 0;
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+    }
+
+    #outro {
+      display: none;
+      opacity: 0;
+    }
+
+    #game .timer {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 5px;
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+
+    #stop {
+      border: 0;
+      border-radius: 20px;
+      background-color: #eeb64d;
+      font-size: 30px;
+      font-family: 'Gochi Hand', cursive;
+      cursor: pointer;
+      margin-left: 10px;
+      padding: 10px 20px 5px 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Don't Think About Cheese!</h1>
+
+<div id="background">
+</div>
+
+<div id="intro">
+  <p>Objective: simple. Go for as long as you can without thinking about cheese.</p>
+  <button class="start">Start!</button>
+</div>
+
+<div id="outro">
+  <p><span class="timer"></span> seconds. Not bad!</p>
+  <button class="start">Play Again!</button>
+</div>
+
+<div id="game">
+  <span class="timer">0.000</span>
+  <button id="stop">Darn it! I thought about cheese.</button>
+</div>
+
+<script>
+  var cheeses = d3.shuffle([
+    'stmaartenpiloot/6494039871',
+    'refractedmoments/244856192',
+    'darioalba/5437950845',
+    'ladymissmarquise/5383384526',
+    'gee01/4090407169',
+    'kraskland/3435610898',
+    'anneh632/5766697640',
+    'jamesrbowe/4679657297',
+    'eepaul/8326115428',
+    'jwittlin/9896208964'
+  ]).slice(0, 10);
+
+  var start,
+      done = false,
+      format = d3.format('03d'),
+      time = d3.selectAll('.timer'),
+      seconds;
+
+  var images = d3.select('#background')
+    .selectAll('div')
+    .data(cheeses)
+    .enter().append('div')
+    .style('background-image', function(d) {
+      return 'url(images/' + d.split('/')[0] + '.jpg)'
+    });
+
+  d3.selectAll('.start')
+    .on('click', function () {
+      start = new Date();
+
+      d3.select('#intro, #outro').transition()
+        .duration(500)
+        .style('opacity', 0)
+        .each('end', function () {
+          d3.select(this)
+            .style('display', 'none');
+        });
+
+      d3.select('#game')
+        .style('display', 'block')
+        .transition()
+        .duration(500)
+        .style('opacity', 1);
+
+      var current = 0;
+
+      function next() {
+        if (done) return;
+        images.classed('current', function (d, i) { return i === current; });
+        current = (current + 1) % cheeses.length;
+        setTimeout(next, 5000);
+      }
+
+      setTimeout(next, 3000);
+
+      d3.timer(function () {
+        var ms = new Date() - start;
+        seconds = Math.floor(ms / 1000) + '.' + format(ms % 1000);
+        time.text(seconds);
+        return done;
+      });
+    });
+
+  d3.select("#stop")
+    .on('click', function () {
+      done = true;
+      images.classed('current', false);
+
+      d3.select('#game')
+        .transition()
+        .duration(500)
+        .style('opacity', 0);
+
+      d3.select('#outro')
+        .style('display', 'block')
+        .transition()
+        .duration(500)
+        .style('opacity', 1);
+
+      d3.selectAll('.twitter-share-button, .twitter-follow-button')
+        .remove();
+
+      d3.select('#outro')
+        .append('a')
+        .attr('class', 'twitter-follow-button')
+        .attr('href', 'https://twitter.com/jfire')
+        .attr('data-show-count', 'false');
+
+      d3.select('#outro')
+        .append('a')
+        .attr('class', 'twitter-share-button')
+        .attr('data-url', 'http://dontthinkaboutcheese.com')
+        .attr('data-related', 'jfire')
+        .attr('data-align', 'right')
+        .attr('data-hashtags', 'dontthinkaboutcheese')
+        .attr('data-text', 'I went ' + seconds +
+          ' seconds without thinking about cheese! How long can you go?');
+
+      twttr.widgets.load();
+    });
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-29668835-2', 'dontthinkaboutcheese.com');
+  ga('send', 'pageview');
+</script>
+</body>
