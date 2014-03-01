@@ -65,6 +65,19 @@
       margin-top: 5em;
     }
 
+    button {
+      border: 0;
+      border-radius: 20px;
+      font-family: 'Gochi Hand', cursive;
+      background-color: #eeb64d;
+      transition: 250ms background-color;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ffc254;
+    }
+
     .start {
       width: 300px;
       height: 100px;
@@ -73,20 +86,9 @@
       left: 50%;
       margin-top: -50px;
       margin-left: -150px;
-      border: 0;
-      border-radius: 20px;
-      background-color: #eeb64d;
       font-size: 50px;
-      font-family: 'Gochi Hand', cursive;
-      cursor: pointer;
       padding-top: 10px;
-      transition: 250ms background-color;
     }
-
-    .start:hover {
-      background-color: #ffc254;
-    }
-
 
     #game {
       display: none;
@@ -109,12 +111,7 @@
     }
 
     #stop {
-      border: 0;
-      border-radius: 20px;
-      background-color: #eeb64d;
       font-size: 30px;
-      font-family: 'Gochi Hand', cursive;
-      cursor: pointer;
       margin-left: 10px;
       padding: 10px 20px 5px 20px;
     }
@@ -140,6 +137,7 @@
 
 <div id="outro">
   <p><span id="score"></span> seconds. Not bad!</p>
+  <div id="twitter"></div>
   <button class="start">Play Again!</button>
   <span id="cc"></span>
 </div>
@@ -228,12 +226,13 @@
       setTimeout(next, 3000);
 
       var format = d3.format('0.1f'),
-        timer = d3.select('#timer');
+        timer = d3.select('#timer'),
+        interval;
 
-      setInterval(function () {
+      interval = setInterval(function () {
+        if (done) return clearInterval(interval);
         seconds = format((new Date() - start) / 1000);
         timer.text(seconds);
-        return done;
       }, 100);
     });
 
@@ -251,16 +250,16 @@
       d3.select('#score')
         .text(seconds);
 
-      d3.selectAll('.twitter-share-button, .twitter-follow-button')
+      d3.selectAll('#twitter *')
         .remove();
 
-      d3.select('#outro')
+      d3.select('#twitter')
         .append('a')
         .attr('class', 'twitter-follow-button')
         .attr('href', 'https://twitter.com/jfire')
         .attr('data-show-count', 'false');
 
-      d3.select('#outro')
+      d3.select('#twitter')
         .append('a')
         .attr('class', 'twitter-share-button')
         .attr('data-url', 'http://dontthinkaboutcheese.com')
