@@ -160,7 +160,7 @@
 </div>
 
 <div id="game">
-  <span id="timer">0.000</span>
+  <span id="timer">0.0</span>
   <button id="stop">Darn it! I thought about cheese.</button>
 </div>
 
@@ -242,15 +242,14 @@
 
       setTimeout(next, 3000);
 
-      var format = d3.format('03d'),
+      var format = d3.format('0.1f'),
         timer = d3.select('#timer');
 
-      d3.timer(function () {
-        var ms = new Date() - start;
-        seconds = Math.floor(ms / 1000) + '.' + format(ms % 1000);
+      setInterval(function () {
+        seconds = format((new Date() - start) / 1000);
         timer.text(seconds);
         return done;
-      });
+      }, 100);
     });
 
   d3.select("#stop")
